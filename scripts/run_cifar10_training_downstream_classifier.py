@@ -17,7 +17,8 @@ def run_eval(gpu, encoder_usage_info, downstream_dataset, encoder, reference_lab
     os.system(cmd)
 
 
-
+# 这里的 9,12,1就是想要下游任务将后门识别到哪个目标类别上，这个类需要和truck、priority和one对应，不是随便弄的
+# 这个类别在前面做后门的时候是reference，所以不能乱选，必须选reference样本的类
 run_eval(0, 'cifar10', 'stl10', 'output/cifar10/clean_encoder/model_1000.pth', 9, './trigger/trigger_pt_white_21_10_ap_replace.npz', 'truck')
 run_eval(1, 'cifar10', 'gtsrb', 'output/cifar10/clean_encoder/model_1000.pth', 12, './trigger/trigger_pt_white_21_10_ap_replace.npz', 'priority')
 run_eval(2, 'cifar10', 'svhn', 'output/cifar10/clean_encoder/model_1000.pth', 1, './trigger/trigger_pt_white_21_10_ap_replace.npz', 'one')

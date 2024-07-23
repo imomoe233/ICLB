@@ -26,6 +26,8 @@ def run_finetune(gpu, encoder_usage_info, shadow_dataset, downstream_dataset, tr
 # 预训练模型 3个 cifar10 ImageNet CLIP，在这三个数据集上，分别对GTSRB, SVHN, and STL10进行微调，得到backdoor encoder，总共获得9个Backdoor encoder
 # 使用这9个backdoor encoder，对各自微调的数据集进行下游任务训练，最后得到9个结果
 
+# 这里的downstream_dataset只做log输出的地方引导文件夹用，reference = 'truck'在finetune会作为参考文件，有一个truck.npz我文件作为reference
+# 因为这里的refernece使stl10数据集里的，所以这里的log文件夹就用到downstream_dataset了
 run_finetune(0, 'cifar10', 'cifar10', 'stl10', 'trigger_pt_white_21_10_ap_replace.npz', 'truck')
 # run_finetune(1, 'cifar10', 'cifar10', 'gtsrb', 'trigger_pt_white_21_10_ap_replace.npz', 'priority')
 # run_finetune(2, 'cifar10', 'cifar10', 'svhn', 'trigger_pt_white_21_10_ap_replace.npz', 'one')
