@@ -106,5 +106,6 @@ if __name__ == '__main__':
             net_test(net, nn_test_loader, epoch, criterion, 'Clean Accuracy (CA)')
             net_test(net, nn_backdoor_loader, epoch, criterion, 'Attack Success Rate-Baseline (ASR-B)')
         else:
+            # 后门encoder对下游干净样本的分类准确率
             net_test(net, nn_test_loader, epoch, criterion, 'Backdoored Accuracy (BA)')
             net_test(net, nn_backdoor_loader, epoch, criterion, 'Attack Success Rate (ASR)')

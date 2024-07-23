@@ -76,7 +76,12 @@ def train(backdoored_encoder, clean_encoder, data_loader, train_optimizer, args)
 
         loss_0_list, loss_1_list = [], []
         for i in range(len(feature_reference_list)):
+            # shadow所有样本都加上了触发器，作为后门样本
+            # 后门的特征 * 参考图像的特征
+            # 以使encoder可以将后门识别为参考图像
             loss_0_list.append(- torch.sum(feature_backdoor_list[i] * feature_reference_list[i], dim=-1).mean())
+            # 参考图像增强的特征 * 参考图像的特征
+            # 以使encoder可以提取出干净参考图像的特征
             loss_1_list.append(- torch.sum(feature_reference_aug_list[i] * clean_feature_reference_list[i], dim=-1).mean())
         loss_2 = - torch.sum(feature_raw * clean_feature_raw, dim=-1).mean()
 

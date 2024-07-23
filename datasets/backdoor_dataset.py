@@ -72,6 +72,9 @@ class BadEncoderDataset(Dataset):
 
         img_backdoor_list = []
         for i in range(len(self.target_image_list)):
+            # getitem，提取的每一个shadow，都会添加上触发器，然后把shadow+触发器放到img_backdoor_list
+            # 每个shadow对应的触发器都放在trigger_patch_list里了，所以可以直接把residual放到trigger_patch_list里
+            # 对于每个样本 都计算residual并相加作为后门样本，修改⬇️
             backdoored_image[:,:,:] = img_copy * self.trigger_mask_list[i] + self.trigger_patch_list[i][:]
             img_backdoor =self.bd_transform(Image.fromarray(backdoored_image))
             img_backdoor_list.append(img_backdoor)
