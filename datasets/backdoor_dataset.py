@@ -1,16 +1,9 @@
-
-import torchvision
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
-from torchvision.datasets import CIFAR10
+from torch.utils.data import Dataset
 from PIL import Image
 import numpy as np
-import torch
-import random
-
 import copy
 
-
+from encode_image import encode_image
 
 class ReferenceImg(Dataset):
 
@@ -70,12 +63,14 @@ class BadEncoderDataset(Dataset):
         img_raw = self.bd_transform(img)
         '''generate backdoor image'''
 
+        im_hidden, im_residual = encode_image(img_copy)
         img_backdoor_list = []
         for i in range(len(self.target_image_list)):
             # getitem，提取的每一个shadow，都会添加上触发器，然后把shadow+触发器放到img_backdoor_list
             # 每个shadow对应的触发器都放在trigger_patch_list里了，所以可以直接把residual放到trigger_patch_list里
             # 对于每个样本 都计算residual并相加作为后门样本，修改⬇️
-            backdoored_image[:,:,:] = img_copy * self.trigger_mask_list[i] + self.trigger_patch_list[i][:]
+            # backdoored_image[:,:,:] = img_copy * self.trigger_mask_list[i] + self.trigger_patch_list[i][:]
+            backdoored_image[:,:,:] = img_copy + im_residual
             img_backdoor =self.bd_transform(Image.fromarray(backdoored_image))
             img_backdoor_list.append(img_backdoor)
 
@@ -117,7 +112,9 @@ class BadEncoderTestBackdoor(Dataset):
 
     def __getitem__(self,index):
         img = copy.deepcopy(self.data[index])
-        img[:] =img * self.trigger_mask_list[0] + self.trigger_patch_list[0][:]
+        im_hidden, im_residual = encode_image(img)
+        # img[:] =img * self.trigger_mask_list[0] + self.trigger_patch_list[0][:]
+        img[:] =img + im_residual
         img_backdoor =self.test_transform(Image.fromarray(img))
         return img_backdoor, self.target_class
 
