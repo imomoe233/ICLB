@@ -138,7 +138,7 @@ if __name__ == '__main__':
     torch.backends.cudnn.deterministic = True
 
     # Specify the pre-training data directory
-    args.data_dir = f'./data/{args.shadow_dataset.split("_")[0]}/'
+    args.data_dir = f'Y:/BadEncoder/data/{args.shadow_dataset.split("_")[0]}/'
     args.knn_k = 200
     args.knn_t = 0.5
     args.reference_label = 0
@@ -147,7 +147,7 @@ if __name__ == '__main__':
     # Create the Pytorch Datasets, and create the data loader for the training set
     # memory_data, test_data_clean, and test_data_backdoor are used to monitor the finetuning process. They are not reqruied by our BadEncoder
     shadow_data, memory_data, test_data_clean, test_data_backdoor = get_shadow_dataset(args)
-    train_loader = DataLoader(shadow_data, batch_size=args.batch_size, shuffle=True, num_workers=2, pin_memory=True, drop_last=True)
+    train_loader = DataLoader(shadow_data, batch_size=args.batch_size, shuffle=True, num_workers=0, pin_memory=True, drop_last=True)
 
     clean_model = get_encoder_architecture_usage(args).cuda()
     model = get_encoder_architecture_usage(args).cuda()
@@ -156,9 +156,9 @@ if __name__ == '__main__':
     print("Optimizer: SGD")
     if args.encoder_usage_info == 'cifar10' or args.encoder_usage_info == 'stl10':
         # note that the following three dataloaders are used to monitor the finetune of the pre-trained encoder, they are not required by our BadEncoder. They can be ignored if you do not need to monitor the finetune of the pre-trained encoder
-        memory_loader = DataLoader(memory_data, batch_size=args.batch_size, shuffle=False, num_workers=2, pin_memory=True)
-        test_loader_clean = DataLoader(test_data_clean, batch_size=args.batch_size, shuffle=False, num_workers=2, pin_memory=True)
-        test_loader_backdoor = DataLoader(test_data_backdoor, batch_size=args.batch_size, shuffle=False, num_workers=2, pin_memory=True)
+        memory_loader = DataLoader(memory_data, batch_size=args.batch_size, shuffle=False, num_workers=0, pin_memory=True)
+        test_loader_clean = DataLoader(test_data_clean, batch_size=args.batch_size, shuffle=False, num_workers=0, pin_memory=True)
+        test_loader_backdoor = DataLoader(test_data_backdoor, batch_size=args.batch_size, shuffle=False, num_workers=0, pin_memory=True)
         optimizer = torch.optim.SGD(model.f.parameters(), lr=args.lr, weight_decay=5e-4, momentum=0.9)
     else:
         optimizer = torch.optim.SGD(model.visual.parameters(), lr=args.lr, weight_decay=5e-4, momentum=0.9)
@@ -179,7 +179,7 @@ if __name__ == '__main__':
 
     if args.encoder_usage_info == 'cifar10' or args.encoder_usage_info == 'stl10':
         # check whether the pre-trained encoder is loaded successfully or not
-        test_acc_1 = test(model.f, memory_loader, test_loader_clean, test_loader_backdoor,0, args)
+        test_acc_1 = test(model.f, memory_loader, test_loader_clean, test_loader_backdoor, 0, args)
         print('initial test acc: {}'.format(test_acc_1))
 
     # training loop
