@@ -1,9 +1,16 @@
+import sys
+import bchlib
 from torch.utils.data import Dataset
 from PIL import Image
 import numpy as np
 import copy
+import tensorflow.compat.v1 as tf
+from tensorflow.python.saved_model import tag_constants
+from tensorflow.python.saved_model import signature_constants
 
 from encode_image import encode_image
+
+tf.disable_v2_behavior()
 
 class ReferenceImg(Dataset):
 
@@ -51,19 +58,23 @@ class BadEncoderDataset(Dataset):
         self.transform = transform
         self.bd_transform = bd_transform
         self.ftt_transform = ftt_transform
+        
+        self.sess = tf.InteractiveSession(graph=tf.get_default_graph())
+        model_path = 'ckpt/encoder_imagenet'
+        self.model = tf.saved_model.loader.load(self.sess, [tag_constants.SERVING], model_path)
 
     def __getitem__(self, index):
         img = self.data[self.indices[index]]
         img_copy = copy.deepcopy(img)
         backdoored_image = copy.deepcopy(img)
+        
         img = Image.fromarray(img)
         '''original image'''
         if self.transform is not None:
             im_1 = self.transform(img)
         img_raw = self.bd_transform(img)
         '''generate backdoor image'''
-
-        im_hidden, im_residual = encode_image(img_copy)
+        im_hidden, im_residual = encode_image(backdoored_image, self.model, self.sess)
         img_backdoor_list = []
         for i in range(len(self.target_image_list)):
             # getitem，提取的每一个shadow，都会添加上触发器，然后把shadow+触发器放到img_backdoor_list
@@ -83,8 +94,12 @@ class BadEncoderDataset(Dataset):
             target_img_1_list_return.append(target_img_1)
 
         return img_raw, img_backdoor_list, target_image_list_return, target_img_1_list_return
+    
     def __len__(self):
         return len(self.indices)
+    
+    def __del__(self):
+        self.sess.close()
 
 
 class BadEncoderTestBackdoor(Dataset):
@@ -109,10 +124,15 @@ class BadEncoderTestBackdoor(Dataset):
         self.target_class = reference_label
 
         self.test_transform = transform
+        
+        self.sess = tf.InteractiveSession(graph=tf.get_default_graph())
+        model_path = 'ckpt/encoder_imagenet'
+        self.model = tf.saved_model.loader.load(self.sess, [tag_constants.SERVING], model_path)
 
     def __getitem__(self,index):
         img = copy.deepcopy(self.data[index])
-        im_hidden, im_residual = encode_image(img)
+
+        im_hidden, im_residual = encode_image(img, self.model, self.sess)
         # img[:] =img * self.trigger_mask_list[0] + self.trigger_patch_list[0][:]
         img[:] =img + im_residual
         img_backdoor =self.test_transform(Image.fromarray(img))
@@ -122,7 +142,8 @@ class BadEncoderTestBackdoor(Dataset):
     def __len__(self):
         return self.data.shape[0]
 
-
+    def __del__(self):
+        self.sess.close()
 
 class CIFAR10CUSTOM(Dataset):
 

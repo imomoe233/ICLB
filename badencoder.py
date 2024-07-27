@@ -176,12 +176,12 @@ if __name__ == '__main__':
             model.visual.load_state_dict(checkpoint['state_dict'])
         else:
             raise NotImplementedError()
-
+    
     if args.encoder_usage_info == 'cifar10' or args.encoder_usage_info == 'stl10':
         # check whether the pre-trained encoder is loaded successfully or not
         test_acc_1 = test(model.f, memory_loader, test_loader_clean, test_loader_backdoor, 0, args)
         print('initial test acc: {}'.format(test_acc_1))
-
+    
     # training loop
     for epoch in range(1, args.epochs + 1):
         print("=================================================")
