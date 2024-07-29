@@ -112,7 +112,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', default=0.001, type=float, help='learning rate in SGD')
     parser.add_argument('--lambda1', default=1.0, type=np.float64, help='value of labmda1')
     parser.add_argument('--lambda2', default=1.0, type=np.float64, help='value of labmda2')
-    parser.add_argument('--epochs', default=200, type=int, help='Number of sweeps over the shadow dataset to inject the backdoor')
+    parser.add_argument('--epochs', default=50, type=int, help='Number of sweeps over the shadow dataset to inject the backdoor')
 
     parser.add_argument('--reference_file', default='', type=str, help='path to the reference inputs')
     parser.add_argument('--trigger_file', default='', type=str, help='path to the trigger')
