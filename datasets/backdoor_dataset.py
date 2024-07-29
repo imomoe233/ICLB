@@ -74,16 +74,22 @@ class BadEncoderDataset(Dataset):
             im_1 = self.transform(img)
         img_raw = self.bd_transform(img)
         '''generate backdoor image'''
+        
         im_hidden, im_residual = encode_image(backdoored_image, self.model, self.sess)
         img_backdoor_list = []
+
         for i in range(len(self.target_image_list)):
             # getitem，提取的每一个shadow，都会添加上触发器，然后把shadow+触发器放到img_backdoor_list
             # 每个shadow对应的触发器都放在trigger_patch_list里了，所以可以直接把residual放到trigger_patch_list里
             # 对于每个样本 都计算residual并相加作为后门样本，修改⬇️
             # backdoored_image[:,:,:] = img_copy * self.trigger_mask_list[i] + self.trigger_patch_list[i][:]
-            backdoored_image[:,:,:] = img_copy + im_residual
+            backdoored_image[:,:,:] = img_copy + np.array(im_residual).reshape((32, 32, 3))
+            # backdoored_image[:,:,:] = img_copy + [[[1]]]
             img_backdoor =self.bd_transform(Image.fromarray(backdoored_image))
             img_backdoor_list.append(img_backdoor)
+
+        img_backdoor =self.bd_transform(Image.fromarray(backdoored_image))
+        img_backdoor_list.append(img_backdoor)
 
         target_image_list_return, target_img_1_list_return = [], []
         for i in range(len(self.target_image_list)):
@@ -134,7 +140,8 @@ class BadEncoderTestBackdoor(Dataset):
 
         im_hidden, im_residual = encode_image(img, self.model, self.sess)
         # img[:] =img * self.trigger_mask_list[0] + self.trigger_patch_list[0][:]
-        img[:] =img + im_residual
+        img[:] =img + np.array(im_residual).reshape((32, 32, 3))
+        # img[:] =img + [[[1]]]
         img_backdoor =self.test_transform(Image.fromarray(img))
         return img_backdoor, self.target_class
 

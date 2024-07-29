@@ -10,7 +10,7 @@ def run_finetune(gpu, encoder_usage_info, shadow_dataset, downstream_dataset, tr
         os.makedirs(save_path)
 
     cmd = f'python badencoder.py \
-    --lr 0.001 \
+    --lr 0.00001 \
     --batch_size 256 \
     --results_dir {save_path}/ \
     --shadow_dataset {shadow_dataset} \
