@@ -53,17 +53,17 @@ if __name__ == '__main__':
     assert args.reference_label >= 0, 'Enter the correct target class'
 
 
-    args.data_dir = f'./data/{args.dataset}/'
+    args.data_dir = f'Y:/BadEncoder/data/{args.dataset}/'
     target_dataset, train_data, test_data_clean, test_data_backdoor = get_dataset_evaluation(args)
 
 
-    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=False, num_workers=2, pin_memory=True)
-    test_loader_clean = DataLoader(test_data_clean, batch_size=args.batch_size, shuffle=False, num_workers=2,
+    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=False, num_workers=0, pin_memory=True)
+    test_loader_clean = DataLoader(test_data_clean, batch_size=args.batch_size, shuffle=False, num_workers=0,
                                    pin_memory=True)
-    test_loader_backdoor = DataLoader(test_data_backdoor, batch_size=args.batch_size, shuffle=False, num_workers=2,
+    test_loader_backdoor = DataLoader(test_data_backdoor, batch_size=args.batch_size, shuffle=False, num_workers=0,
                                       pin_memory=True)
 
-    target_loader = DataLoader(target_dataset, batch_size=args.batch_size, shuffle=False, num_workers=2, pin_memory=True)
+    target_loader = DataLoader(target_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0, pin_memory=True)
 
     num_of_classes = len(train_data.classes)
 

@@ -1,4 +1,6 @@
-.output/
+# save model
+output/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -123,3 +125,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+*.pth

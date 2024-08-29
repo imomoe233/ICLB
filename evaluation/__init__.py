@@ -34,7 +34,7 @@ def test(net, memory_data_loader, test_data_clean_loader, test_data_backdoor_loa
 
             total_num += data.size(0)
             total_top1 += (pred_labels[:, 0] == target).float().sum().item()
-            test_bar.set_description('Test Epoch: [{}/{}] Acc@1:{:.2f}%'.format(epoch, args.epochs, total_top1 / total_num * 100))
+            test_bar.set_description('Test Epoch: [{}/{}] Clean Acc@1:{:.2f}%'.format(epoch, args.epochs, total_top1 / total_num * 100))
 
         total_num, total_top1 = 0., 0.
         test_bar = tqdm(test_data_backdoor_loader)
@@ -47,7 +47,7 @@ def test(net, memory_data_loader, test_data_clean_loader, test_data_backdoor_loa
 
             total_num += data.size(0)
             total_top1 += (pred_labels[:, 0] == target).float().sum().item()
-            test_bar.set_description('Test Epoch: [{}/{}] Acc@1:{:.2f}%'.format(epoch, args.epochs, total_top1 / total_num * 100))
+            test_bar.set_description('Test Epoch: [{}/{}] Backdoor Acc@1:{:.2f}%'.format(epoch, args.epochs, total_top1 / total_num * 100))
 
     return total_top1 / total_num * 100
 

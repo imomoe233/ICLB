@@ -10,6 +10,7 @@ from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import wandb
 
 from models import get_encoder_architecture_usage
 from datasets import get_shadow_dataset
@@ -18,6 +19,9 @@ from evaluation import test
 
 def train(backdoored_encoder, clean_encoder, data_loader, train_optimizer, args):
     backdoored_encoder.train()
+    
+    
+    
 
     for module in backdoored_encoder.modules():
     # print(module)
@@ -100,6 +104,8 @@ def train(backdoored_encoder, clean_encoder, data_loader, train_optimizer, args)
         total_loss_1 += loss_1.item() * data_loader.batch_size
         total_loss_2 += loss_2.item() * data_loader.batch_size
         train_bar.set_description('Train Epoch: [{}/{}], lr: {:.6f}, Loss: {:.6f}, Loss0: {:.6f}, Loss1: {:.6f},  Loss2: {:.6f}'.format(epoch, args.epochs, train_optimizer.param_groups[0]['lr'], total_loss / total_num,  total_loss_0 / total_num , total_loss_1 / total_num,  total_loss_2 / total_num))
+        if wandb != None:
+            wandb.log({"epoch": epoch, f"Loss":total_loss / total_num, f"Loss0":total_loss_0 / total_num, f"Loss1":total_loss_1 / total_num, f"Loss2":total_loss_2 / total_num,})
 
     return total_loss / total_num
 
@@ -112,12 +118,15 @@ if __name__ == '__main__':
     parser.add_argument('--lr', default=0.001, type=float, help='learning rate in SGD')
     parser.add_argument('--lambda1', default=1.0, type=np.float64, help='value of labmda1')
     parser.add_argument('--lambda2', default=1.0, type=np.float64, help='value of labmda2')
-    parser.add_argument('--epochs', default=50, type=int, help='Number of sweeps over the shadow dataset to inject the backdoor')
+    parser.add_argument('--epochs', default=500, type=int, help='Number of sweeps over the shadow dataset to inject the backdoor')
 
     parser.add_argument('--reference_file', default='', type=str, help='path to the reference inputs')
     parser.add_argument('--trigger_file', default='', type=str, help='path to the trigger')
     parser.add_argument('--shadow_dataset', default='cifar10', type=str,  help='shadow dataset')
     parser.add_argument('--pretrained_encoder', default='', type=str, help='path to the clean encoder used to finetune the backdoored encoder')
+    parser.add_argument('--start_epoch', default=1, type=int, help='Number of sweeps over the shadow dataset to inject the backdoor')
+
+    
     parser.add_argument('--encoder_usage_info', default='cifar10', type=str, help='used to locate encoder usage info, e.g., encoder architecture and input normalization parameter')
 
     parser.add_argument('--results_dir', default='', type=str, metavar='PATH', help='path to save the backdoored encoder')
@@ -139,16 +148,37 @@ if __name__ == '__main__':
 
     # Specify the pre-training data directory
     args.data_dir = f'Y:/BadEncoder/data/{args.shadow_dataset.split("_")[0]}/'
+    
     args.knn_k = 200
     args.knn_t = 0.5
     args.reference_label = 0
     print(args)
 
+    wandb = None
+    if wandb != None:
+        wandb.init(
+            # set the wandb project where this run will be logged
+            project="Liquid Backdoor_Badencoder",
+            name= 'cifar10_gtsrb_badencoder',
+            #id = "",
+            #resume = True,
+            # track hyperparameters and run metadata
+            config={
+                    'batch_size': args.batch_size,
+                    'lr': args.lr,
+                    'reference_file': args.reference_file,
+                    'shadow_dataset': args.shadow_dataset,
+                    'pretrained_encoder': args.pretrained_encoder,
+                    'results_dir': args.results_dir,
+            }
+        )
+
     # Create the Pytorch Datasets, and create the data loader for the training set
     # memory_data, test_data_clean, and test_data_backdoor are used to monitor the finetuning process. They are not reqruied by our BadEncoder
+    
     shadow_data, memory_data, test_data_clean, test_data_backdoor = get_shadow_dataset(args)
     train_loader = DataLoader(shadow_data, batch_size=args.batch_size, shuffle=True, num_workers=0, pin_memory=True, drop_last=True)
-
+ 
     clean_model = get_encoder_architecture_usage(args).cuda()
     model = get_encoder_architecture_usage(args).cuda()
 
@@ -179,11 +209,11 @@ if __name__ == '__main__':
     
     if args.encoder_usage_info == 'cifar10' or args.encoder_usage_info == 'stl10':
         # check whether the pre-trained encoder is loaded successfully or not
-        test_acc_1 = test(model.f, memory_loader, test_loader_clean, test_loader_backdoor, 0, args)
+        test_acc_1 = test(model.f, memory_loader, test_loader_clean, test_loader_backdoor, args.start_epoch, args)
         print('initial test acc: {}'.format(test_acc_1))
     
     # training loop
-    for epoch in range(1, args.epochs + 1):
+    for epoch in range(args.start_epoch, args.epochs + 1):
         print("=================================================")
         if args.encoder_usage_info == 'cifar10' or args.encoder_usage_info == 'stl10':
             train_loss = train(model.f, clean_model.f, train_loader, optimizer, args)
@@ -195,8 +225,8 @@ if __name__ == '__main__':
             raise NotImplementedError()
 
         # Save the BadEncoder
-        if epoch % args.epochs == 0:
+        if epoch % 10 == 0:
             torch.save({'epoch': epoch, 'state_dict': model.state_dict(), 'optimizer' : optimizer.state_dict(),}, args.results_dir + '/model_' + str(epoch) + '.pth')
 
         # Save the intermediate checkpoint
-        # torch.save({'epoch': epoch, 'state_dict': model.state_dict(), 'optimizer' : optimizer.state_dict(),}, args.results_dir + '/model_last.pth')
+        torch.save({'epoch': epoch, 'state_dict': model.state_dict(), 'optimizer' : optimizer.state_dict(),}, args.results_dir + '/model_last.pth')
